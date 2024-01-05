@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import sys
+
+FINAL_LENGTH = 200
+
+def ctopy(file):
+	file = open(file, "r").read()#.replace('\t', ' ' * 4)
+	file = [i.strip() for i in file.split("{") if i != ""]
+	res = []
+	tab = 0
+	for (i, j) in enumerate(file):
+		split = j.split("}")
+		res.append([tab, [r.strip() for r in split[0].strip().split(";")]])
+		if (len(split) > 1):
+			for i in split[1:]:
+				tab -= 1
+				res.append([tab, [r.strip() for r in i.strip().split(";")]])
+		tab += 1
+	final = ""
+
+	for (i, [tab, line]) in enumerate(res[:-1]):
+		r = ""
+		for j in range(len(line)):
+			if (line[j] == ""):
+				continue
+			line[j] = '\t' * tab + line[j]
+			num = (FINAL_LENGTH - len(line[j].expandtabs(4).split("\n")[-1]))
+			if (j < len(line) - 1):
+				line[j] += ((num - 1) // 4) * '\t' + ";"
+				if (len(line) < 2 or line[j + 1] != ""):
+					line[j] += "\n"
+			r += line[j]
+		line = [j for j in line if j != ""]
+		final += r
+		if (len(line)):
+			num = (FINAL_LENGTH - len(line[-1].expandtabs(4).split("\n")[-1]))
+		if (num < 0):
+			num = 0
+		if (i < len(res) - 1 and tab <= res[i + 1][0]):
+			final += ((num - 1) // 4) * '\t' + "{"
+		else:
+			final +=  ((num - 1) // 4) * '\t' + "}"
+			if (tab < 2):
+				final += "\n"
+		if(i < len(res) - 1 and len([i for i in res[i + 1][1] if i != ""])):
+			final += "\n"
+	if not sys.argv[1].endswith(".c"):
+		sys.argv[1] += ".c"
+	sys.argv[1] = sys.argv[1].replace(".c", ".py.c")
+	with open(sys.argv[1] , "w") as f:
+		f.write(final)
+
+
+	# print(file)
+
+if __name__ == "__main__":
+	if len(sys.argv) < 2:
+		print("Usage: ./ctopy.py [file.c]")
+		exit(1)
+	for i in sys.argv[1:]:
+		ctopy(i)
